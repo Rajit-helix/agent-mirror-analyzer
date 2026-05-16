@@ -3,30 +3,24 @@
 ## Responsibilities
 
 The frontend dashboard displays:
-- AI readiness scores
-- metadata issues
-- perception summaries
-- prioritized recommendations
 
-## Planned Stack
+- AI readiness scores;
+- detected metadata issues;
+- AI perception summaries; and
+- loading and error states for the audit API.
+
+## Stack
 
 - Next.js
+- React
 - Tailwind CSS
+- Axios
 
-## Planned Dashboard Sections
+## Running Locally
 
-### Product Audit Overview
-Shows audit summary for all products
+```bash
+npm install
+npm run dev
+```
 
-### Product Detail Analysis
-Displays:
-- metadata gaps
-- trust signal issues
-- AI perception summary
-
-### Recommendations Panel
-Provides actionable merchant fixes
-
-## Current Status
-
-Frontend dashboard planning in progress.
+The dashboard calls `http://localhost:5000/api/audit` by default. Override the backend host with `NEXT_PUBLIC_API_BASE_URL`.
