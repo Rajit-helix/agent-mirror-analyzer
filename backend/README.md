@@ -3,39 +3,41 @@
 ## Responsibilities
 
 The backend handles:
-- Shopify Admin API integration
-- product ingestion
-- metadata auditing
-- AI perception analysis
-- readiness scoring
 
-## Planned Stack
+- Shopify Admin GraphQL API product ingestion;
+- product metadata audit scoring;
+- issue detection for AI shopping-agent readiness; and
+- OpenAI-powered perception summaries.
+
+## Stack
 
 - Node.js
 - Express
-- Shopify Admin GraphQL API
-- OpenAI API
+- Axios
+- dotenv
+- OpenAI Node SDK
 
-## Planned Endpoints
+## Endpoint
 
-### GET /products
-Fetch Shopify products
+### `GET /api/audit`
 
-### POST /audit
-Run representation audit pipeline
-
-### GET /score/:productId
-Return AI readiness score
+Fetches Shopify products, audits metadata quality, generates an AI readiness score, and returns AI perception summaries.
 
 ## Environment Variables
 
+Copy `.env.example` to `.env` and fill in real credentials:
+
 ```env
-SHOPIFY_STORE=
-SHOPIFY_ADMIN_TOKEN=
-OPENAI_API_KEY=
+SHOPIFY_STORE=agent-mirror-demo.myshopify.com
+SHOPIFY_ADMIN_TOKEN=your_shopify_admin_token
+SHOPIFY_API_VERSION=2026-04
+OPENAI_API_KEY=your_openai_key
+PORT=5000
 ```
 
-## Current Status
+## Running Locally
 
-Backend integration setup in progress.
-
+```bash
+npm install
+npm run dev
+```
