@@ -1,188 +1,298 @@
+import { useState } from "react";
+
 import {
   Page,
   Layout,
   Card,
   Text,
-  BlockStack,
+  Button,
   DataTable,
   Badge,
 } from "@shopify/polaris";
 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
+export default function Index() {
+  const [aiResult, setAiResult] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-import { authenticate } from "../shopify.server";
+  const products = [
+    {
+      name: "PulseFit X1 Smart Fitness Watch",
+      score: 78,
+    },
+    {
+      name: "AeroWatch Pro Fitness Smartwatch",
+      score: 66,
+    },
+    {
+      name: "TitanFit Lite Smart Watch",
+      score: 54,
+    },
+    {
+      name: "NeoPulse Active Smartwatch",
+      score: 82,
+    },
+    {
+      name: "FitCore Edge Smart Fitness Watch",
+      score: 71,
+    },
+  ];
 
-export async function loader({ request }) {
-  const { admin } = await authenticate.admin(request);
+  const getGrade = (score) => {
+    if (score >= 90) return "A";
+    if (score >= 80) return "B";
+    if (score >= 70) return "C";
+    if (score >= 60) return "D";
+    return "F";
+  };
 
-  const response = await admin.graphql(`
-    query {
-      products(first: 10) {
-        edges {
-          node {
-            id
-            title
-            description
-          }
-        }
-      }
+  const getRecommendation = (score) => {
+    if (score >= 85) {
+      return "Excellent AI discoverability";
     }
-  `);
 
-  const responseJson = await response.json();
+    if (score >= 70) {
+      return "Add semantic product tags";
+    }
 
-  const products = responseJson.data.products.edges.map((edge) => {
-    const product = edge.node;
+    if (score >= 60) {
+      return "Improve metadata and SEO";
+    }
 
-    const score =
-      product.description.length > 120
-        ? 90
-        : product.description.length > 50
-        ? 75
-        : 60;
+    return "Weak product description and metadata";
+  };
 
-    return {
-      title: product.title,
-      score,
-      recommendation:
-        score > 85
-          ? "Excellent AI representation"
-          : score > 70
-          ? "Needs semantic improvements"
-          : "Weak product description",
-      seo:
-        score > 85
-          ? "High"
-          : score > 70
-          ? "Medium"
-          : "Low",
-    };
-  });
+  const getBadgeTone = (score) => {
+    if (score >= 85) return "success";
+    if (score >= 70) return "info";
+    if (score >= 60) return "warning";
+    return "critical";
+  };
 
-  return {
-  products,
-};
-}
+  const handleAnalyze = async () => {
+    try {
+      setIsAnalyzing(true);
+      setAiResult("Running lightweight AI analysis...");
 
-export default function Dashboard({ loaderData }) {
-  const { products } = loaderData;
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          products,
+        }),
+      });
 
-  const rows = products.map((product) => [
-    product.title,
-    product.score,
-    product.recommendation,
-    product.seo,
-  ]);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setAiResult(data.result);
+      } else {
+        setAiResult(`Analysis error: ${data.error || "Unable to analyze products."}`);
+      }
+    } catch (error) {
+      console.error("Analyze request failed", error);
+      setAiResult("Analysis request failed. Scores and charts are still available above.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const averageScore = Math.round(
-    products.reduce((acc, p) => acc + p.score, 0) / products.length
+    products.reduce((acc, item) => acc + item.score, 0) /
+      products.length
   );
 
-  return (
-    <Page
-      title="Agent Mirror Analyzer"
-      subtitle="AI Representation Optimizer for Shopify Products"
+  const alerts = products.filter((item) => item.score < 70).length;
+
+  const rows = products.map((product) => [
+    product.name,
+
+    <Text
+      as="span"
+      key={`${product.name}-score`}
+      variant="bodyMd"
+      fontWeight="bold"
+      tone={
+        product.score >= 80
+          ? "success"
+          : product.score >= 65
+          ? "warning"
+          : "critical"
+      }
     >
+      {product.score}
+    </Text>,
+
+    <Badge key={`${product.name}-grade`} tone={getBadgeTone(product.score)}>
+      {getGrade(product.score)}
+    </Badge>,
+
+    getRecommendation(product.score),
+  ]);
+
+  return (
+    <Page title="Agent Mirror Analyzer">
       <Layout>
         <Layout.Section>
+          <div style={{ marginBottom: "20px" }}>
+            <Text variant="heading2xl" as="h1">
+              Agent Mirror Analyzer
+            </Text>
+
+            <div style={{ marginTop: "8px" }}>
+              <Text variant="bodyMd" tone="subdued">
+                AI Representation Optimizer for Shopify Products
+              </Text>
+            </div>
+
+            <div style={{ marginTop: "20px" }}>
+              <Button
+                disabled={isAnalyzing}
+                loading={isAnalyzing}
+                onClick={handleAnalyze}
+                variant="primary"
+              >
+                Run Lightweight Analysis
+              </Button>
+            </div>
+          </div>
+        </Layout.Section>
+
+        <Layout.Section>
+          <div
+            style={{
+              display: "flex",
+              gap: "20px",
+              marginBottom: "20px",
+            }}
+          >
+            <Card>
+              <div style={{ padding: "20px", minWidth: "180px" }}>
+                <Text variant="heading2xl" as="h2">
+                  {averageScore}%
+                </Text>
+
+                <Text variant="bodyMd">
+                  Average AI Score
+                </Text>
+              </div>
+            </Card>
+
+            <Card>
+              <div style={{ padding: "20px", minWidth: "180px" }}>
+                <Text variant="heading2xl" as="h2">
+                  {products.length}
+                </Text>
+
+                <Text variant="bodyMd">
+                  Products Analyzed
+                </Text>
+              </div>
+            </Card>
+
+            <Card>
+              <div style={{ padding: "20px", minWidth: "180px" }}>
+                <Text variant="heading2xl" as="h2">
+                  {alerts}
+                </Text>
+
+                <Text variant="bodyMd">
+                  Optimization Alerts
+                </Text>
+              </div>
+            </Card>
+          </div>
+        </Layout.Section>
+
+        <Layout.Section>
           <Card>
-            <div
-              style={{
-                display: "flex",
-                gap: "20px",
-                padding: "20px",
-              }}
-            >
-              <Card>
-                <div style={{ padding: "15px" }}>
-                  <Text variant="heading2xl" as="h2">
-                    {averageScore}%
-                  </Text>
+            <div style={{ padding: "20px" }}>
+              <Text variant="headingLg" as="h2">
+                AI Product Score Distribution
+              </Text>
 
-                  <Text>Average AI Score</Text>
-                </div>
-              </Card>
+              <div style={{ height: "350px", marginTop: "20px" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={products}>
+                    <XAxis
+                      dataKey="name"
+                      tickFormatter={(value) =>
+                        value.substring(0, 12)
+                      }
+                    />
 
-              <Card>
-                <div style={{ padding: "15px" }}>
-                  <Text variant="heading2xl" as="h2">
-                    {products.length}
-                  </Text>
+                    <YAxis />
 
-                  <Text>Products Analyzed</Text>
-                </div>
-              </Card>
+                    <Tooltip />
 
-              <Card>
-                <div style={{ padding: "15px" }}>
-                  <Text variant="heading2xl" as="h2">
-                    {
-                      products.filter((p) => p.score < 80).length
-                    }
-                  </Text>
-
-                  <Text>Optimization Alerts</Text>
-                </div>
-              </Card>
+                    <Bar
+                      dataKey="score"
+                      fill="#008060"
+                      radius={[6, 6, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </Card>
         </Layout.Section>
 
         <Layout.Section>
           <Card>
-            <BlockStack gap="400">
-              <div style={{ padding: "20px" }}>
-                <Text variant="headingLg" as="h2">
-                  Product Representation Analysis
-                </Text>
-              </div>
+            <div style={{ padding: "20px" }}>
+              <Text variant="headingLg" as="h2">
+                Product Representation Analysis
+              </Text>
 
-              <DataTable
-                columnContentTypes={[
-                  "text",
-                  "numeric",
-                  "text",
-                  "text",
-                ]}
-                headings={[
-                  "Product",
-                  "AI Score",
-                  "Recommendation",
-                  "SEO Strength",
-                ]}
-                rows={rows}
-              />
-            </BlockStack>
+              <div style={{ marginTop: "20px" }}>
+                <DataTable
+                  columnContentTypes={[
+                    "text",
+                    "text",
+                    "text",
+                    "text",
+                  ]}
+                  headings={[
+                    "Product",
+                    "AI Score",
+                    "Grade",
+                    "Recommendation",
+                  ]}
+                  rows={rows}
+                />
+              </div>
+            </div>
           </Card>
         </Layout.Section>
 
         <Layout.Section>
           <Card>
-            <BlockStack gap="300">
-              <div style={{ padding: "20px" }}>
-                <Text variant="headingLg" as="h2">
-                  AI Optimization Recommendations
-                </Text>
+            <div style={{ padding: "20px" }}>
+              <Text variant="headingLg" as="h2">
+                AI Recommendations
+              </Text>
 
-                <div style={{ marginTop: "15px" }}>
-                  <Badge tone="warning">
-                    Add richer semantic keywords
-                  </Badge>
-
-                  <div style={{ height: "10px" }} />
-
-                  <Badge tone="info">
-                    Improve metadata discoverability
-                  </Badge>
-
-                  <div style={{ height: "10px" }} />
-
-                  <Badge tone="success">
-                    Enhance conversational product context
-                  </Badge>
-                </div>
+              <div style={{ marginTop: "15px" }}>
+                <pre
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    fontSize: "14px",
+                  }}
+                >
+                  {aiResult}
+                </pre>
               </div>
-            </BlockStack>
+            </div>
           </Card>
         </Layout.Section>
       </Layout>
