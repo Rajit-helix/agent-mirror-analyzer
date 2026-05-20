@@ -31,6 +31,14 @@ shopify app dev
 
 Press P to open the URL to your app. Once you click install, you can start development.
 
+### Live Dev URLs
+
+- Preview URL: `https://admin.shopify.com/store/agent-mirror-demo/apps/91be6c578baa8f338810c941bad77e88?dev-console=show`
+- GraphiQL URL: `http://localhost:3457/graphiql?key=6d41da1d38dbb95e2a5223ee26b46e50d73fbbfff119d9f57b0627a19666c9bc`
+- Direct dev tunnel: `https://sentences-assuming-oriented-courses.trycloudflare.com`
+
+> These URLs were verified from the live Shopify CLI dev server. If the admin preview returns a 404, ensure the app is installed on the dev store and use the full preview URL without line breaks.
+
 Local development is powered by [the Shopify CLI](https://shopify.dev/docs/apps/tools/cli). It logs into your account, connects to an app, provides environment variables, updates remote config, creates a tunnel and provides commands to generate extensions.
 
 ### Authenticating and querying data

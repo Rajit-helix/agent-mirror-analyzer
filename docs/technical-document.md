@@ -118,6 +118,16 @@ If merchant product data is incomplete or malformed:
 - products are still analyzed partially
 - missing fields are surfaced as audit findings
 
+## Local Development URLs
+
+The app is currently running in Shopify CLI dev mode with the following verified URLs:
+
+- Preview URL: `https://admin.shopify.com/store/agent-mirror-demo/apps/91be6c578baa8f338810c941bad77e88?dev-console=show`
+- Direct dev tunnel: `https://sentences-assuming-oriented-courses.trycloudflare.com`
+- GraphiQL URL: `http://localhost:3457/graphiql?key=6d41da1d38dbb95e2a5223ee26b46e50d73fbbfff119d9f57b0627a19666c9bc`
+
+> If the Shopify admin preview page returns a 404, verify that the app is installed on the dev store and that the full URL is copied intact.
+
 ## Known Limitations
 
 Current limitations include:
