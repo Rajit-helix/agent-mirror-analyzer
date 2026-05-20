@@ -2,12 +2,21 @@ const ChatbotEngine = require("./chatbotEngine");
 
 const chatbot = new ChatbotEngine();
 
-const generateAISummary = async (product, issues) => {
+const generateAISummary = (product, issues) => {
   try {
     return chatbot.generateProductAnalysis(product, issues || []);
   } catch (error) {
     console.error("Chatbot analysis failed", error);
     return createFallbackSummary(product, issues || []);
+  }
+};
+
+const generateSuggestedRewrite = (product, issues) => {
+  try {
+    return chatbot.generateSuggestedRewrite(product, issues || []);
+  } catch (error) {
+    console.error("Chatbot rewrite failed", error);
+    return null;
   }
 };
 
@@ -23,17 +32,15 @@ const createFallbackSummary = (product, issues) => {
   ].join(" ");
 };
 
-const generateSemanticTags = (product) => {
-  return chatbot.generateSemanticTags(product);
-};
+const generateSemanticTags = (product) => chatbot.generateSemanticTags(product);
 
-const generateDiscoverabilityGuidance = (product, issues) => {
-  return chatbot.generateDiscoverabilityGuidance(product, issues || []);
-};
+const generateDiscoverabilityGuidance = (product, issues) =>
+  chatbot.generateDiscoverabilityGuidance(product, issues || []);
 
 module.exports = {
   createFallbackSummary,
   generateAISummary,
-  generateSemanticTags,
   generateDiscoverabilityGuidance,
+  generateSemanticTags,
+  generateSuggestedRewrite,
 };

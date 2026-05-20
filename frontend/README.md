@@ -1,19 +1,23 @@
-# Frontend
+# Frontend — Agent Mirror Analyzer Dashboard
 
-## Responsibilities
+Next.js + Tailwind dashboard that visualizes the audit produced by the
+backend.
 
-The frontend dashboard displays:
+## Features
 
-- AI readiness scores;
-- detected metadata issues;
-- AI perception summaries; and
-- loading and error states for the audit API.
+- AI Readiness Score per product (color-coded)
+- Detected issues with merchant-friendly copy
+- AI perception summary (simulated agent read)
+- Semantic tag chips
+- Expandable suggested rewrite per product
+- Catalog-level summary stats
+- Sort, filter, re-run, and one-click CSV export
 
 ## Stack
 
-- Next.js
-- React
-- Tailwind CSS
+- Next.js 15
+- React 19
+- Tailwind CSS 3
 - Axios
 
 ## Running Locally
@@ -23,4 +27,5 @@ npm install
 npm run dev
 ```
 
-The dashboard calls `http://localhost:5000/api/audit` by default. Override the backend host with `NEXT_PUBLIC_API_BASE_URL`.
+The dashboard calls `http://localhost:5000/api/audit` by default. Override the
+backend host with `NEXT_PUBLIC_API_BASE_URL`.

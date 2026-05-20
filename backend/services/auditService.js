@@ -1,4 +1,8 @@
-const { generateAISummary } = require("./aiService");
+const {
+  generateAISummary,
+  generateSemanticTags,
+  generateSuggestedRewrite,
+} = require("./aiService");
 
 const getPrimaryVariant = (product) => product.variants?.edges?.[0]?.node;
 
@@ -52,23 +56,28 @@ const detectIssues = (product) => {
   return issues;
 };
 
-const auditProducts = async (products) => {
-  const results = [];
+const auditProduct = (product) => {
+  const score = calculateScore(product);
+  const issues = detectIssues(product);
+  const aiSummary = generateAISummary(product, issues);
+  const tags = generateSemanticTags(product);
+  const suggestedRewrite = generateSuggestedRewrite(product, issues);
 
-  for (const product of products) {
-    const score = calculateScore(product);
-    const issues = detectIssues(product);
-    const aiSummary = await generateAISummary(product, issues);
-
-    results.push({
-      aiSummary,
-      issues,
-      score,
-      title: product.title,
-    });
-  }
-
-  return results;
+  return {
+    aiSummary,
+    issues,
+    score,
+    suggestedRewrite,
+    tags,
+    title: product.title,
+  };
 };
 
-module.exports = { auditProducts, calculateScore, detectIssues };
+const auditProducts = async (products) => products.map(auditProduct);
+
+module.exports = {
+  auditProduct,
+  auditProducts,
+  calculateScore,
+  detectIssues,
+};

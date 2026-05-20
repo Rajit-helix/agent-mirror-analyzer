@@ -202,6 +202,68 @@ class ChatbotEngine {
     return tags.length > 0 ? tags : ['general', 'product'];
   }
 
+  generateSuggestedRewrite(product, issues) {
+    const tags = this.generateSemanticTags(product);
+    const variant = product.variants?.edges?.[0]?.node || {};
+    const titleParts = [product.title];
+
+    if (tags.includes("premium") || tags.includes("durable")) {
+      // tag already implied by source copy
+    } else if (tags.length && tags[0] !== "general") {
+      titleParts.push(`— ${tags.slice(0, 2).map((t) => t.replace("-", " ")).join(", ")}`);
+    }
+
+    const improvedTitle = titleParts.join(" ").trim();
+    const originalDescription = product.description || "";
+
+    const descriptionLines = [];
+    descriptionLines.push(originalDescription.trim() || `${product.title} — full description coming soon.`);
+
+    const filler = [];
+    const desc = originalDescription.toLowerCase();
+    if (!/\b(size|dimension|length|width|height|inch|cm|mm|litre|liter)\b/i.test(desc)) {
+      filler.push("**Dimensions:** _add measurements (e.g., 28 × 18 × 12 cm, 1.2 kg)_");
+    }
+    if (!/\b(material|fabric|plastic|metal|wood|leather|cotton|aluminum|steel)\b/i.test(desc)) {
+      filler.push("**Material:** _add the primary material(s)_");
+    }
+    if (!/\b(warranty|guarantee|return)\b/i.test(desc)) {
+      filler.push("**Warranty:** _add the trust signal (e.g., 1-year manufacturer warranty)_");
+    }
+    if (!/\b(compatible|works with|fits|supports|requires)\b/i.test(desc)) {
+      filler.push("**Compatibility:** _add the platforms / devices this works with_");
+    }
+    if (/\b(long|great|amazing|premium|best)\b\s+battery/i.test(desc)) {
+      filler.push("**Battery life:** _replace the vague claim with a number (e.g., 18-hour battery)_");
+    }
+
+    if (filler.length > 0) {
+      descriptionLines.push("");
+      descriptionLines.push("**Suggested structured additions:**");
+      filler.forEach((line) => descriptionLines.push(`- ${line}`));
+    }
+
+    const bulletSpecs = [];
+    if (variant.sku) bulletSpecs.push(`SKU: ${variant.sku}`);
+    if (variant.price) bulletSpecs.push(`Price: $${variant.price}`);
+    if (tags.length && tags[0] !== "general") {
+      bulletSpecs.push(`Key attributes: ${tags.slice(0, 4).join(", ")}`);
+    }
+
+    if (bulletSpecs.length > 0) {
+      descriptionLines.push("");
+      descriptionLines.push("**Quick-reference specs:**");
+      bulletSpecs.forEach((line) => descriptionLines.push(`- ${line}`));
+    }
+
+    return {
+      title: improvedTitle,
+      description: descriptionLines.join("\n"),
+      tags,
+      hasGaps: filler.length > 0 || issues.length > 0,
+    };
+  }
+
   generateDiscoverabilityGuidance(product, issues) {
     const guidance = [];
     const descLength = (product.description || '').length;

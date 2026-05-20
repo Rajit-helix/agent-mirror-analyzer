@@ -2,121 +2,140 @@
 
 ## System Overview
 
-Agent Mirror Analyzer is an AI representation auditing platform for Shopify merchants. The system analyzes merchant product data and identifies issues that reduce AI recommendation quality and representation confidence.
+Agent Mirror Analyzer is an AI representation auditing platform for Shopify
+merchants. It analyzes product data and identifies the metadata issues that
+degrade AI shopping-agent recommendation quality.
 
 The platform combines:
-- Shopify Admin API integration
-- deterministic metadata analysis
-- LLM-based perception analysis
-- scoring and prioritization logic
+
+- Shopify Admin GraphQL API integration (with a credential-free fallback for demos)
+- Deterministic metadata scoring
+- A rule-based semantic engine for AI perception simulation and copy rewriting
+- A merchant-facing audit dashboard
 
 ## Architecture
 
+```
+┌──────────────────────┐      ┌───────────────────────────┐      ┌──────────────────┐
+│  Next.js Dashboard   │ ───▶ │   Express Audit API       │ ───▶ │  Shopify Admin   │
+│  (Tailwind, React)   │ ◀─── │   /api/audit  /api/export │ ◀─── │  GraphQL API     │
+└──────────────────────┘      └───────────────┬───────────┘      └──────────────────┘
+                                              │
+                              ┌───────────────┴────────────────┐
+                              ▼                                ▼
+                  ┌───────────────────────┐     ┌────────────────────────────┐
+                  │  Deterministic Audit  │     │   Rule-Based Chatbot       │
+                  │  (score + issues)     │     │   (perception + rewrite)   │
+                  └───────────────────────┘     └────────────────────────────┘
+```
+
 ### Frontend
-- Next.js dashboard
-- Displays audit reports, AI readiness scores, and recommendations
+- Next.js 15 + React 19
+- Tailwind CSS for styling
+- Sort, filter, re-run, and one-click CSV export
+- Per-product card with score, issues, AI perception summary, semantic tags, and
+  an expandable suggested rewrite
 
 ### Backend
-- Node.js + Express API server
-- Handles Shopify API integration and audit pipeline execution
+- Node.js + Express
+- Routes:
+  - `GET /health` — liveness probe
+  - `GET /api/audit` — JSON audit response
+  - `GET /api/export` — streams the same audit as a CSV download
+- Services:
+  - `shopifyService` — Shopify Admin GraphQL client with sample-data fallback
+  - `auditService` — deterministic scoring and issue detection
+  - `aiService` — entrypoint that delegates to the rule-based chatbot
+  - `chatbotEngine` — perception simulation, recommendations, semantic tags, suggested rewrites
 
 ### Shopify Integration
-- Shopify Admin GraphQL API
-- Fetches:
-  - product titles
-  - descriptions
-  - images
-  - metafields
-  - pricing
-  - inventory metadata
+Fetches via the Admin GraphQL API:
 
-### AI Layer
-- OpenAI API
-- Generates:
-  - AI perception summaries
-  - ambiguity analysis
-  - recommendation suggestions
+- `id`, `title`, `description`
+- `featuredImage.url`
+- First variant's `price` and `sku`
+
+If `SHOPIFY_STORE`/`SHOPIFY_ADMIN_TOKEN` are missing or `USE_SAMPLE_DATA=true`,
+the backend returns three bundled demo products instead. This lets judges run
+the full demo with zero credential setup.
+
+### Semantic Layer (Rule-Based Chatbot)
+
+The chatbot has four responsibilities:
+
+1. **Perception simulation** — paragraph-level summary of how an AI shopping
+   assistant would describe the product, gated on the count of detected issues.
+2. **Weakness prioritization** — ranked list of the highest-impact issues.
+3. **Recommendation generation** — concrete next steps for the merchant.
+4. **Suggested rewrite** — a structured rewrite of the title and description
+   with explicit placeholders for the missing fields (dimensions, material,
+   warranty, compatibility, battery life).
+
+The engine is intentionally rule-based for explainability, zero external cost,
+and offline-demo reliability. The `aiService` boundary is the single seam
+where an LLM could be swapped in.
 
 ## Data Flow
 
-1. Merchant connects Shopify store
-2. Backend fetches product catalog using Shopify Admin API
-3. Deterministic audit engine evaluates metadata quality
-4. Product data is passed to LLM analysis pipeline
-5. AI-generated insights are combined with deterministic scores
-6. Dashboard displays:
-   - readiness score
-   - detected issues
-   - AI perception summary
-   - recommended improvements
+1. Dashboard requests `/api/audit`
+2. Backend fetches the product catalog (Shopify GraphQL or sample data)
+3. `auditService` runs the deterministic score + issue detection per product
+4. `aiService` (via `chatbotEngine`) generates the perception summary,
+   semantic tags, and a suggested rewrite
+5. The backend returns a single JSON array, one entry per product
+6. The dashboard renders the score, issues, summary, tags, and rewrite,
+   supporting sort/filter/CSV export
 
 ## Deterministic Audit Logic
 
-The deterministic layer evaluates:
-- metadata completeness
-- title quality
-- description clarity
-- trust signal presence
-- structured attribute coverage
-- image availability
+Scoring starts at 100 and deducts:
+- `-20` if the description is missing or shorter than 50 chars
+- `-10` if the primary variant has no SKU
+- `-15` if there is no featured image
+- `-8` if the description contains the ambiguous phrase "long battery"
 
-Example checks:
-- missing compatibility details
-- vague battery claims
-- absent waterproof rating
-- missing SKU
-- incomplete metafields
-
-## AI Responsibilities
-
-The LLM layer is responsible for:
-- simulating AI shopping agent perception
-- identifying ambiguity
-- generating merchant-facing explanations
-- prioritizing recommendation clarity issues
-
-Example output:
-> "This product lacks connectivity specifications and contains ambiguous durability claims, reducing AI recommendation confidence."
+Issues are surfaced as merchant-facing strings (e.g., *"Ambiguous battery
+life claim"*) so the dashboard can render them directly without translation.
 
 ## Why We Split AI and Deterministic Logic
 
-We intentionally separated:
-- deterministic validation
-- AI interpretation
+| Layer | Strengths | Reason it's its own concern |
+|---|---|---|
+| Deterministic | Measurable, fast, free, testable | Catches regressions in unit tests |
+| Semantic (rule-based engine) | Generates language, prioritizes, rewrites | Failure here can't break scoring |
 
-Deterministic logic handles:
-- measurable validation
-- metadata completeness
-- rule-based scoring
-
-LLM analysis handles:
-- semantic ambiguity
-- perception simulation
-- contextual reasoning
-
-This separation improves:
-- reliability
-- explainability
-- cost efficiency
+This split improves reliability, explainability, and cost — and means swapping
+a real LLM in later is a one-file change at the `aiService` seam.
 
 ## Failure Handling
 
 ### Shopify API Failure
-If Shopify API requests fail:
-- retry logic is triggered
-- cached product data may be used
-- partial audit results are shown when possible
+- If the Shopify API returns an unexpected shape, the backend raises a
+  descriptive error and the dashboard surfaces a retry CTA.
+- If credentials are missing, the system silently falls back to the sample
+  catalog so demos still work.
 
-### LLM Failure
-If the LLM returns malformed or empty output:
-- deterministic scoring still executes
-- fallback summaries are generated
-- errors are logged for retry
+### Semantic Engine Failure
+- `aiService` catches any thrown error and falls back to `createFallbackSummary`,
+  guaranteeing every product still gets an AI summary.
 
 ### Invalid Product Data
-If merchant product data is incomplete or malformed:
-- products are still analyzed partially
-- missing fields are surfaced as audit findings
+- Missing fields are surfaced as audit findings rather than crashing the
+  pipeline (partial products are still scored and rendered).
+
+## Tests
+
+Unit tests use `node:test` and cover:
+
+- Full-score path for a complete product
+- Score deductions for short descriptions, missing SKU, missing image, and
+  ambiguous battery claims
+- End-to-end audit pipeline producing score, issues, summary, tags, and
+  suggested rewrite
+- The suggested rewrite targets the specific gaps detected for imperfect
+  products
+
+Run with `cd backend && npm test`.
 
 ## Local Development URLs
 
@@ -130,31 +149,32 @@ The app is currently running in Shopify CLI dev mode with the following verified
 
 ## Known Limitations
 
-Current limitations include:
-- limited policy analysis
-- no multi-store benchmarking
-- no live AI shopping agent integration
-- simplified scoring heuristics
+- Rule-based semantic layer (no live LLM in the hackathon MVP)
+- No multi-store benchmarking
+- No live agent integration (Perplexity / Rufus / ChatGPT shopping)
+- Static heuristics — would benefit from learned weights
 
 ## Future Improvements
 
-With more time we would add:
-- competitor benchmarking
-- policy clarity analysis
-- AI simulation across multiple shopping agents
-- automated metadata rewriting
-- merchant analytics dashboard
+- Replace `chatbotEngine` with a real LLM at the `aiService` seam
+- Live simulation across multiple AI shopping assistants
+- Metafield and structured-data depth analysis
+- Automated metadata rewrites via Shopify Admin mutations
+- Cohort benchmarking against industry vertical baselines
 
-## Technical Tradeoffs
+## Tradeoffs
 
-We intentionally prioritized:
-- focused AI representation analysis
-- explainability
-- actionable outputs
+We prioritized:
 
-instead of building:
-- generic chatbots
-- full ecommerce management tools
-- broad analytics platforms
+- Focused AI representation analysis
+- Explainability of every score and recommendation
+- A working, credential-free demo
 
-This allowed the project scope to remain aligned with the hackathon problem statement.
+over:
+
+- Full LLM integration in the MVP
+- Broad ecommerce-management features
+- Complex ML ranking systems
+
+This kept the project aligned with the hackathon prompt while remaining
+demonstrably reliable in a 90-second walkthrough.

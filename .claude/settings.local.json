@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(NODE_ENV=test node --test)",
+      "Bash(USE_SAMPLE_DATA=true node server.js)",
+      "Bash(curl -s http://localhost:5000/health)",
+      "Bash(curl -s http://localhost:5000/api/audit)",
+      "Bash(curl -s -I http://localhost:5000/api/export)",
+      "Bash(curl -s http://localhost:5000/api/export)",
+      "Bash(npx next *)",
+      "Bash(python -c \"import json,sys; data=json.load\\(sys.stdin\\); print\\('Products:', len\\(data\\)\\); print\\('Keys per product:', sorted\\(data[0].keys\\(\\)\\)\\); print\\('First product score:', data[0]['score']\\); print\\('Has rewrite:', bool\\(data[0].get\\('suggestedRewrite'\\)\\)\\)\")"
+    ]
+  }
+}

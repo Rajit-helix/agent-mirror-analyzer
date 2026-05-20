@@ -44,18 +44,31 @@ test("detectIssues finds short description, missing SKU, missing image, and ambi
   assert.equal(calculateScore(product), 47);
 });
 
-test("auditProducts returns scored products with fallback summaries when OpenAI is not configured", async () => {
-  const originalApiKey = process.env.OPENAI_API_KEY;
-  delete process.env.OPENAI_API_KEY;
-
+test("auditProducts enriches each product with score, issues, summary, tags, and rewrite", async () => {
   const [result] = await auditProducts([completeProduct]);
 
   assert.equal(result.title, completeProduct.title);
   assert.equal(result.score, 100);
   assert.deepEqual(result.issues, []);
-  assert.match(result.aiSummary, /appears understandable/);
+  assert.match(result.aiSummary, /AI Shopping Assistant Perspective/);
+  assert.ok(Array.isArray(result.tags));
+  assert.ok(result.suggestedRewrite);
+  assert.equal(typeof result.suggestedRewrite.title, "string");
+  assert.equal(typeof result.suggestedRewrite.description, "string");
+});
 
-  if (originalApiKey) {
-    process.env.OPENAI_API_KEY = originalApiKey;
-  }
+test("auditProducts flags an imperfect product and produces a rewrite that targets the gaps", async () => {
+  const product = {
+    title: "Watch",
+    description: "Long battery.",
+    featuredImage: null,
+    variants: { edges: [{ node: { sku: "" } }] },
+  };
+
+  const [result] = await auditProducts([product]);
+
+  assert.ok(result.score < 100);
+  assert.ok(result.issues.length >= 3);
+  assert.ok(result.suggestedRewrite.hasGaps);
+  assert.match(result.suggestedRewrite.description, /Suggested structured additions/);
 });

@@ -1,37 +1,44 @@
-# Backend
+# Backend — Agent Mirror Analyzer
+
+Express + Node API that audits Shopify product metadata for AI shopping-agent
+readiness.
 
 ## Responsibilities
 
-The backend handles:
-
-- Shopify Admin GraphQL API product ingestion;
-- product metadata audit scoring;
-- issue detection for AI shopping-agent readiness; and
-- OpenAI-powered perception summaries.
+- Shopify Admin GraphQL ingestion (with a credential-free sample-data fallback)
+- Deterministic metadata scoring and issue detection
+- Rule-based semantic engine for AI perception summaries and suggested rewrites
+- JSON audit + CSV export endpoints
 
 ## Stack
 
-- Node.js
+- Node.js (≥ 20)
 - Express
 - Axios
 - dotenv
-- OpenAI Node SDK
 
-## Endpoint
+> No external LLM dependency. The semantic layer is a transparent, testable
+> rule engine — see `services/chatbotEngine.js`.
 
-### `GET /api/audit`
+## Endpoints
 
-Fetches Shopify products, audits metadata quality, generates an AI readiness score, and returns AI perception summaries.
+| Method | Path | Returns |
+|---|---|---|
+| `GET` | `/health` | `{ status: "ok" }` |
+| `GET` | `/api/audit` | Array of `{ title, score, issues[], aiSummary, tags, suggestedRewrite }` |
+| `GET` | `/api/export` | CSV download of the latest audit |
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in real credentials:
+Copy `.env.example` to `.env`. All values are optional — leaving Shopify
+credentials empty triggers the bundled sample catalog so demos work without
+any setup.
 
 ```env
-SHOPIFY_STORE=agent-mirror-demo.myshopify.com
-SHOPIFY_ADMIN_TOKEN=your_shopify_admin_token
+SHOPIFY_STORE=
+SHOPIFY_ADMIN_TOKEN=
 SHOPIFY_API_VERSION=2026-04
-OPENAI_API_KEY=your_openai_key
+USE_SAMPLE_DATA=true
 PORT=5000
 ```
 
@@ -41,3 +48,11 @@ PORT=5000
 npm install
 npm run dev
 ```
+
+## Tests
+
+```bash
+npm test
+```
+
+All 5 unit tests should pass.
