@@ -1,6 +1,6 @@
 # Contribution Note
 
-This project is a solo development effort for the Agent Mirror Analyzer hackathon submission.
+This project is a team effort for the Agent Mirror Analyzer hackathon submission.
 
 Work split:
 - Product thinking: 40%
