@@ -78,6 +78,8 @@ then click **Download CSV**.
 > "Agent Mirror Analyzer turns the AI agent from a black box into a mirror
 > merchants can act on. **That's the submission.**"
 
+Refer to DEMO_SCRIPT.md for the full demo (both video and audio).
+
 ---
 
 ## Q&A cheat sheet
