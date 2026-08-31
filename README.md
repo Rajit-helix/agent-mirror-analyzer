@@ -51,7 +51,7 @@ cd frontend && npm install && npm run dev
 
 Open **http://localhost:3000** — you'll see a dark, agent-themed dashboard scoring three intentionally imperfect demo products.
 
-📽️ See [`docs/DEMO.md`](docs/DEMO.md) for the 90-second pitch script we use to walk judges through the experience.
+📽️ See [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) for the 90-second pitch script we use to walk judges through the experience.
 
 ---
 
