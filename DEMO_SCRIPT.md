@@ -2,8 +2,6 @@
 
 The recorded demo video has been added to the repository.
 
-- Location: `assets/demo.mp4`
-
 - Public Drive link 1: https://drive.google.com/file/d/1lPv8fSdYUXVziaM6bgiHLzi0qswL_esE/view?usp=sharing
 
 - Public Drive link 2: https://drive.google.com/file/d/1njgbFrNmk8qkyhwrm729Ls1g3OccG9CH/view?usp=sharing
