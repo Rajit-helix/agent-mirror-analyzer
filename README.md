@@ -1,8 +1,6 @@
 # 🪞 Agent Mirror Analyzer
 
 > **See your Shopify catalog the way an AI shopping agent sees it — and fix what they can't understand.**
->
-> Submission for the **Kasparro Agent Commerce Hackathon**.
 
 [![Node](https://img.shields.io/badge/node-%E2%89%A520.x-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
